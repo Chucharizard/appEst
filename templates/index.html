@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EstaDística – Calculadora de Estadística Descriptiva</title>
+  <meta name="description" content="Resuelve ejercicios de estadística descriptiva: tabla de frecuencias (Sturges), media, mediana, moda, deciles, cuartiles y percentiles." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="site-header">
+  <div class="container header-inner">
+    <div class="logo">
+      <span class="logo-icon">∑</span>
+      <span class="logo-text">EstaDística</span>
+    </div>
+    <p class="header-subtitle">Calculadora de Estadística Descriptiva · Regla de Sturges</p>
+  </div>
+</header>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <div class="container">
+    <h1 class="hero-title">
+      Resuelve ejercicios de<br/>
+      <span class="gradient-text">Estadística Descriptiva</span>
+    </h1>
+    <p class="hero-desc">
+      Ingresa tu conjunto de datos y obtén automáticamente la tabla estadística (Sturges),
+      medidas de tendencia central e indicadores de posición con su interpretación.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════ FORM CARD ═══════════ -->
+<main class="container main-content">
+  <div class="card form-card">
+    <div class="card-header">
+      <div class="card-icon">📊</div>
+      <div>
+        <h2 class="card-title">Ingresa los Datos</h2>
+        <p class="card-desc">Separa los valores con espacios, comas o saltos de línea</p>
+      </div>
+    </div>
+
+    <form method="POST" id="statsForm">
+      <!-- Dataset textarea -->
+      <div class="field-group">
+        <label for="datos" class="field-label">Conjunto de Datos</label>
+        <textarea
+          id="datos"
+          name="datos"
+          class="data-textarea"
+          rows="5"
+          placeholder="Ejemplo: 12 13 9,5 10 8 10 9 8 8,5 9&#10;10,1 9,2 8,1 8,2 8,1 8,3 8,1 9,2 9,4 10&#10;10 9 8,5 12 8,1 8 8,3 9,3 14 14,5"
+          required
+        >{{ raw_data }}</textarea>
+        <span class="field-hint">Acepta punto (.) o coma (,) como separador decimal</span>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
+        <button type="button" class="btn-example" onclick="loadExample()">
+          ✦ Cargar ejemplo
+        </button>
+        <button type="button" class="btn-example" id="ocrCameraBtn" style="background: rgba(43, 204, 150, 0.1); color: var(--accent-main); border: 1px solid var(--accent-main);">
+          📸 Tomar Foto
+        </button>
+        <button type="button" class="btn-example" id="ocrFileBtn" style="background: rgba(34, 211, 238, 0.08); color: var(--cyan); border: 1px solid var(--cyan);">
+          🖼️ Subir Archivo
+        </button>
+        <input type="file" id="ocrCameraInput" accept="image/*" capture="environment" style="display: none;" />
+        <input type="file" id="ocrFileInput" accept="image/*" style="display: none;" />
+      </div>
+
+      <!-- Opciones a calcular -->
+      <div class="options-section">
+        <p class="options-title">¿Qué deseas calcular?</p>
+        <div class="options-grid">
+          <label class="option-chip">
+            <input type="checkbox" name="tabla" checked />
+            <span class="chip-body">
+              <span class="chip-icon">📋</span>
+              <span>Tabla estadística</span>
+            </span>
+          </label>
+          <label class="option-chip">
+            <input type="checkbox" name="media" checked />
+            <span class="chip-body">
+              <span class="chip-icon">x̄</span>
+              <span>Media</span>
+            </span>
+          </label>
+          <label class="option-chip">
+            <input type="checkbox" name="mediana" checked />
+            <span class="chip-body">
+              <span class="chip-icon">Md</span>
+              <span>Mediana</span>
+            </span>
+          </label>
+          <label class="option-chip">
+            <input type="checkbox" name="moda" checked />
+            <span class="chip-body">
+              <span class="chip-icon">Mo</span>
+              <span>Moda</span>
+            </span>
+          </label>
+          <label class="option-chip">
+            <input type="checkbox" name="cuartiles" checked />
+            <span class="chip-body">
+              <span class="chip-icon">Q</span>
+              <span>Cuartiles</span>
+            </span>
+          </label>
+          <label class="option-chip">
+            <input type="checkbox" name="deciles" checked />
+            <span class="chip-body">
+              <span class="chip-icon">D</span>
+              <span>Deciles</span>
+            </span>
+          </label>
+          <div style="display: flex; gap: 8px; align-items: center; margin-left: 8px;">
+            <label style="font-weight: 500; font-size: 0.9rem; color: var(--text-2);">Percentil Pₖ:</label>
+            <input type="number" name="percentil_k" placeholder="Ej: 88" min="1" max="99" style="width: 70px; padding: 6px; border-radius: 6px; border: 1px solid var(--border1); background: transparent; color: var(--text-1);" value="{{ request.form.get('percentil_k', '') }}" />
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" id="submitBtn">
+        <span class="btn-icon">⚡</span>
+        Calcular
+      </button>
+    </form>
+  </div>
+
+  <!-- ─── ERROR ─── -->
+  {% if error %}
+  <div class="alert alert-error">
+    <span class="alert-icon">⚠️</span>
+    <span>{{ error }}</span>
+  </div>
+  {% endif %}
+
+  <!-- ═══════════ RESULTADOS ═══════════ -->
+  {% if resultado %}
+
+  <!-- Info general -->
+  <div class="result-section">
+    <h2 class="section-title">
+      <span class="section-badge">0</span>
+      Parámetros Iniciales
+    </h2>
+    <div class="info-grid">
+      <div class="info-card">
+        <span class="info-label">n (datos)</span>
+        <span class="info-value">{{ resultado.n }}</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">Mínimo (d)</span>
+        <span class="info-value">{{ resultado.d }}</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">Máximo (D)</span>
+        <span class="info-value">{{ resultado.D }}</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">Longitud (la)</span>
+        <span class="info-value">{{ resultado.la }}</span>
+      </div>
+      <div class="info-card accent">
+        <span class="info-label">k (Sturges)</span>
+        <span class="info-value">{{ resultado.k }}</span>
+      </div>
+      <div class="info-card accent">
+        <span class="info-label">Tamaño (t)</span>
+        <span class="info-value">{{ resultado.t }}</span>
+      </div>
+    </div>
+
+    <div class="formula-box">
+      <p class="formula-title">Paso a paso de la Tabla</p>
+      <p class="formula">1. Alcance: [{{ resultado.d }} ; {{ resultado.D }}]</p>
+      <p class="formula">2. Longitud (la) = {{ resultado.D }} - {{ resultado.d }} + {{ resultado.unidad }} = <strong>{{ resultado.la }}</strong></p>
+      <p class="formula">3. k (Sturges) = 1 + 3.3 · log₁₀({{ resultado.n }}) ≈ <strong>{{ resultado.k }}</strong></p>
+      <p class="formula">4. Tamaño (t) = {{ resultado.la }} / {{ resultado.k }} ≈ {{ resultado.t_inicial }}
+      {% if resultado.correction_applied %}
+      <span style="color:var(--pink);"> → Corrección: {{ resultado.t }} (t·k = {{ resultado.t_k }} ≥ {{ resultado.la }})</span>
+      {% else %}
+       → No requiere corrección
+      {% endif %}
+      </p>
+      {% if resultado.sobrante > 0 %}
+      <p class="formula" style="margin-top: 10px; border-top: 1px solid var(--border2); padding-top: 8px;">
+        5. Ajuste de límites (Sobrante = {{ resultado.t_k }} - {{ resultado.la }} = <strong>{{ resultado.sobrante }}</strong>):<br/>
+        Hay {{ resultado.unidades_sobra }} unidades a repartir. 
+        Se restan {{ resultado.mitad_inf }} mín ({{ resultado.d }} - {{ "%.4g"|format(resultado.mitad_inf * resultado.unidad) }} = <strong>{{ resultado.nuevo_d }}</strong>) y 
+        se suman {{ resultado.mitad_sup }} máx ({{ resultado.D }} + {{ "%.4g"|format(resultado.mitad_sup * resultado.unidad) }} = <strong>{{ resultado.nuevo_D }}</strong>).<br/>
+        El nuevo alcance es <strong>[{{ resultado.nuevo_d }} ; {{ resultado.nuevo_D }}]</strong>.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ─── TABLA ─── -->
+  {% if resultado.calcular.tabla %}
+  <div class="result-section">
+    <h2 class="section-title">
+      <span class="section-badge">a</span>
+      Tabla Estadística de Frecuencias
+    </h2>
+    <div class="table-wrapper">
+      <table class="freq-table">
+        <thead>
+          <tr>
+            <th>Clase</th>
+            <th title="Límite inferior">Lᵢ</th>
+            <th title="Límite superior">Lₛ</th>
+            <th title="Marca de clase">xᵢ</th>
+            <th title="Frecuencia absoluta">fᵢ</th>
+            <th title="Frecuencia relativa">hᵢ</th>
+            <th title="Frecuencia porcentual">pᵢ (%)</th>
+            <th title="Frecuencia absoluta acumulada">Fᵢ</th>
+            <th title="Frecuencia relativa acumulada">Hᵢ</th>
+            <th title="Frecuencia porcentual acumulada">Pᵢ (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in resultado.clases %}
+          <tr class="{% if loop.index is odd %}row-odd{% endif %}">
+            <td class="cell-center bold">{{ c.clase }}</td>
+            <td class="cell-center">{{ c.li }}</td>
+            <td class="cell-center">{{ c.ls }}</td>
+            <td class="cell-center mark-cell">{{ c.marca }}</td>
+            <td class="cell-center fi-cell">{{ c.fi }}</td>
+            <td class="cell-center">{{ "%.4f"|format(c.hi) }}</td>
+            <td class="cell-center">{{ c.pi }}%</td>
+            <td class="cell-center fa-cell">{{ c.Fi }}</td>
+            <td class="cell-center">{{ "%.4f"|format(c.Hi) }}</td>
+            <td class="cell-center">{{ c.Pi }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="cell-right bold">TOTAL</td>
+            <td class="cell-center bold total-fi">{{ resultado.n }}</td>
+            <td class="cell-center bold">1.0000</td>
+            <td class="cell-center bold">100%</td>
+            <td class="cell-center bold">-</td>
+            <td class="cell-center bold">-</td>
+            <td class="cell-center bold">-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ─── MEDIDAS TENDENCIA CENTRAL ─── -->
+  {% if resultado.calcular.media or resultado.calcular.mediana or resultado.calcular.moda %}
+  <div class="result-section">
+    <h2 class="section-title">
+      <span class="section-badge">b</span>
+      Medidas de Tendencia Central
+    </h2>
+
+    <div class="measures-grid">
+
+      {% if resultado.calcular.media and resultado.media is defined %}
+      <div class="measure-card">
+        <div class="measure-header">
+          <span class="measure-symbol">x̄</span>
+          <span class="measure-name">Media Aritmética</span>
+        </div>
+        <div class="measure-formula">
+          x̄ = Σ(xᵢ · fᵢ) / n
+        </div>
+        <div class="measure-value">{{ resultado.media }}</div>
+        <div class="measure-interp">{{ resultado.media_interp }}</div>
+      </div>
+      {% endif %}
+
+      {% if resultado.calcular.mediana and resultado.mediana is defined %}
+      <div class="measure-card">
+        <div class="measure-header">
+          <span class="measure-symbol">Md</span>
+          <span class="measure-name">Mediana</span>
+        </div>
+        <div class="measure-formula">
+          Md = Lᵢ + ((n/2 − Fₐ₋₁) / fᵢ) · c
+        </div>
+        <div class="measure-value">{{ resultado.mediana }}</div>
+        <div class="measure-cls">Localizada en la clase {{ resultado.mediana_clase }}</div>
+        <div class="measure-interp">{{ resultado.mediana_interp }}</div>
+      </div>
+      {% endif %}
+
+      {% if resultado.calcular.moda and resultado.modas is defined %}
+      <div class="measure-card">
+        <div class="measure-header">
+          <span class="measure-symbol">Mo</span>
+          <span class="measure-name">Moda (Czuber)</span>
+        </div>
+        <div class="measure-formula">
+          Mo = Lᵢ + (d₁ / (d₁ + d₂)) · c
+        </div>
+        {% for m in resultado.modas %}
+        <div class="measure-value">{{ m.moda }}</div>
+        <div class="measure-cls">Clase modal: {{ m.clase }}</div>
+        {% endfor %}
+        <div class="measure-interp">{{ resultado.moda_interp }}</div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ─── POSICIÓN ─── -->
+  {% if resultado.calcular.cuartiles or resultado.calcular.deciles or resultado.calcular.percentil_k %}
+  <div class="result-section">
+    <h2 class="section-title">
+      <span class="section-badge">c</span>
+      Medidas de Posición
+    </h2>
+    <div class="formula-box" style="margin-bottom:1.5rem;">
+      <p class="formula-title">Fórmula general</p>
+      <p class="formula">Pₖ = Lᵢ + ( ( (k·n)/100 − Fₐ₋₁ ) / fᵢ ) · t</p>
+    </div>
+
+    <!-- Pk Específico -->
+    {% if resultado.percentil_detalle %}
+    {% set pd = resultado.percentil_detalle %}
+    <div class="formula-box" style="margin-bottom:1.5rem; background: rgba(46, 77, 60, 0.2); border: 1px solid var(--accent-sec); border-radius: 8px; text-align: center;">
+      <p class="formula-title" style="color: var(--accent-sec); font-size: 1.2rem;">P_{{ pd.p }} = {{ pd.valor }}</p>
+      <p class="formula"><strong>Fórmula:</strong> P_{{ pd.p }} = Lᵢ + ( ( ({{ pd.p }} · n)/100 - Fₐ₋₁ ) / fᵢ ) · t</p>
+      <p class="formula"><strong>Sustitución:</strong> P_{{ pd.p }} = {{ pd.li }} + ( ( ( ({{ pd.p }} × {{ resultado.n }}) / 100 ) - {{ pd.fa_ant }} ) / {{ pd.fi }} ) · {{ pd.t }}</p>
+      <p class="formula"><strong>Posición:</strong> ({{ pd.p }} × {{ resultado.n }}) / 100 = <strong>{{ "%.4f"|format(pd.pos) }}</strong></p>
+      <p class="formula"><strong>Clase de percentil:</strong> Cae en la clase {{ pd.clase }}: [{{ pd.li }} ; {{ pd.ls }}]</p>
+    </div>
+    {% endif %}
+
+    <!-- Cuartiles -->
+    {% if resultado.cuartiles_lista %}
+    <h3 style="color: var(--text-1); font-size: 1.1rem; margin-bottom: 1rem;">Cuartiles (Q₁ - Q₃)</h3>
+    <div class="measures-grid">
+      {% for q in resultado.cuartiles_lista %}
+      <div class="measure-card pos-card">
+        <div class="measure-header">
+          <span class="measure-symbol pos-sym">Q_{{ loop.index }}</span>
+          <span class="measure-name">Cuartil {{ loop.index }}</span>
+        </div>
+        <div class="measure-formula">p = {{ loop.index * 25 }} → pos = {{ "%.2f"|format(q.pos) }}</div>
+        <div class="measure-value">{{ q.valor }}</div>
+        <div class="measure-cls">Clase: {{ q.clase }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Deciles -->
+    {% if resultado.deciles_lista %}
+    <h3 style="color: var(--text-1); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 1rem;">Deciles (D₁ - D₉)</h3>
+    <div class="measures-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+      {% for d in resultado.deciles_lista %}
+      <div class="measure-card pos-card">
+        <div class="measure-header">
+          <span class="measure-symbol pos-sym">D_{{ loop.index }}</span>
+        </div>
+        <div class="measure-value" style="font-size: 1.1rem;">{{ d.valor }}</div>
+        <div class="measure-cls">C{{ d.clase }} (pos: {{ "%.2f"|format(d.pos) }})</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+  {% endif %}
+  <!-- fin resultados -->
+
+</main>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <p>EstaDística · Estadística Descriptiva con Flask & Jinja2 · {{ 2026 }}</p>
+  </div>
+</footer>
+
+<!-- OCR Overlay -->
+<div id="ocrOverlay" class="ocr-overlay">
+  <div class="ocr-modal">
+    <div class="ocr-spinner"></div>
+    <h3>Analizando imagen...</h3>
+    <p id="ocrStatus">Iniciando motor neuronal</p>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
