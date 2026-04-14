@@ -1,28 +1,6 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EstaDística – Calculadora de Estadística Descriptiva</title>
-  <meta name="description" content="Resuelve ejercicios de estadística descriptiva: tabla de frecuencias (Sturges), media, mediana, moda, deciles, cuartiles y percentiles." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-</head>
-<body>
+{% extends 'base.html' %}
 
-<!-- ═══════════ HEADER ═══════════ -->
-<header class="site-header">
-  <div class="container header-inner">
-    <div class="logo">
-      <span class="logo-icon">∑</span>
-      <span class="logo-text">EstaDística</span>
-    </div>
-    <p class="header-subtitle">Calculadora de Estadística Descriptiva · Regla de Sturges</p>
-  </div>
-</header>
-
+{% block content %}
 <!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
   <div class="container">
@@ -76,6 +54,26 @@
         </button>
         <input type="file" id="ocrCameraInput" accept="image/*" capture="environment" style="display: none;" />
         <input type="file" id="ocrFileInput" accept="image/*" style="display: none;" />
+      </div>
+
+      <!-- Método de Agrupación -->
+      <div class="options-section" style="margin-bottom: 24px;">
+        <p class="options-title">Método de Agrupación</p>
+        {% set curr_metodo = request.form.get('metodo', 'sturges') %}
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; background: var(--surface2); padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--border2);">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text);">
+            <input type="radio" name="metodo" value="sturges" onchange="toggleMetodo()" {% if curr_metodo == 'sturges' %}checked{% endif %} />
+            Regla de Sturges
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text);">
+            <input type="radio" name="metodo" value="arbitrario" onchange="toggleMetodo()" {% if curr_metodo == 'arbitrario' %}checked{% endif %} />
+            Arbitrario
+          </label>
+          <div id="arbitrarioInput" style="display: {% if curr_metodo == 'arbitrario' %}flex{% else %}none{% endif %}; gap: 8px; align-items: center; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 8px; margin-left: auto;">
+            <label style="font-size: 0.85rem; color: var(--text-mute);">Clases (k):</label>
+            <input type="number" name="k_arbitrario" min="1" max="50" style="width: 70px; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(124,92,252,0.4); background: rgba(124,92,252,0.1); color: var(--text); outline: none;" value="{{ request.form.get('k_arbitrario', '') }}" />
+          </div>
+        </div>
       </div>
 
       <!-- Opciones a calcular -->
@@ -173,7 +171,7 @@
         <span class="info-value">{{ resultado.la }}</span>
       </div>
       <div class="info-card accent">
-        <span class="info-label">k (Sturges)</span>
+        <span class="info-label">k ({% if resultado.metodo == 'arbitrario' %}Arbitrario{% else %}Sturges{% endif %})</span>
         <span class="info-value">{{ resultado.k }}</span>
       </div>
       <div class="info-card accent">
@@ -186,7 +184,11 @@
       <p class="formula-title">Paso a paso de la Tabla</p>
       <p class="formula">1. Alcance: [{{ resultado.d }} ; {{ resultado.D }}]</p>
       <p class="formula">2. Longitud (la) = {{ resultado.D }} - {{ resultado.d }} + {{ resultado.unidad }} = <strong>{{ resultado.la }}</strong></p>
+      {% if resultado.metodo == 'sturges' %}
       <p class="formula">3. k (Sturges) = 1 + 3.3 · log₁₀({{ resultado.n }}) ≈ <strong>{{ resultado.k }}</strong></p>
+      {% else %}
+      <p class="formula">3. k (Método Arbitrario) = <strong>{{ resultado.k }}</strong></p>
+      {% endif %}
       <p class="formula">4. Tamaño (t) = {{ resultado.la }} / {{ resultado.k }} ≈ {{ resultado.t_inicial }}
       {% if resultado.correction_applied %}
       <span style="color:var(--pink);"> → Corrección: {{ resultado.t }} (t·k = {{ resultado.t_k }} ≥ {{ resultado.la }})</span>
@@ -404,5 +406,7 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

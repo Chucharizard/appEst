@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}EstaDística – Calculadora & Gráficos{% endblock %}</title>
+  <meta name="description" content="Resuelve ejercicios de estadística descriptiva y visualiza gráficos de datos." />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  
+  {% block head_scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  {% endblock %}
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR UNIVERSAL ═══════════ -->
+<nav class="site-nav">
+  <div class="nav-container">
+    <div class="logo">
+      <span class="logo-icon">∑</span>
+      <span class="logo-text">EstaDística</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">📊 Tablas Estadísticas</a>
+      <a href="/graficos" class="nav-item {% if request.path == '/graficos' %}active{% endif %}">📈 Gráficos Visión</a>
+    </div>
+  </div>
+</nav>
+
+{% block content %}
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
+</body>
+</html>

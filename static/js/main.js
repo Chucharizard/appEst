@@ -117,3 +117,10 @@ if (ocrFileBtn && ocrFileInput) {
   ocrFileInput.addEventListener("change", handleOcrFile);
 }
 
+// ─── Lógica para UI Arbitraria ──────────────────────────────
+window.toggleMetodo = function() {
+  const method = document.querySelector('input[name="metodo"]:checked').value;
+  document.getElementById('arbitrarioInput').style.display = method === 'arbitrario' ? 'flex' : 'none';
+};
+
+
