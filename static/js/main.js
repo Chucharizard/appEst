@@ -22,34 +22,27 @@ form?.addEventListener("submit", () => {
   btn.disabled = true;
 });
 
-// ─── Inyectar estilos dinámicos (spinner) ────────────────────
-const style = document.createElement("style");
-style.textContent = `
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner {
-    display: inline-block;
-    width: 18px; height: 18px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-  }
-  .pulse { animation: textPulse .6s ease; }
-  @keyframes textPulse {
-    0%   { box-shadow: 0 0 0 0 rgba(124,92,252,0.5); }
-    50%  { box-shadow: 0 0 0 8px rgba(124,92,252,0); }
-    100% { box-shadow: 0 0 0 0 rgba(124,92,252,0); }
-  }
-`;
-document.head.appendChild(style);
-
 // ─── Auto-scroll a resultados ─────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
   const first = document.querySelector(".result-section");
   if (first) {
-    setTimeout(() => first.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
+    setTimeout(() => first.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
   }
 });
+
+// ─── Notificación inline (reemplaza alert) ───────────────────
+function showOcrNotification(msg, type) {
+  const area = document.getElementById("ocrNotifArea");
+  if (!area) return;
+  const prev = area.querySelector(".ocr-notification");
+  if (prev) prev.remove();
+  const icon = type === "error" ? "⚠️" : "✓";
+  const div = document.createElement("div");
+  div.className = `ocr-notification ${type}`;
+  div.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  area.appendChild(div);
+  setTimeout(() => div.remove(), 5000);
+}
 
 // ─── Tesseract.js OCR Logic ───────────────────────────────────
 const ocrCameraBtn = document.getElementById("ocrCameraBtn");
@@ -95,12 +88,13 @@ const handleOcrFile = async (e) => {
       ta.focus();
       ta.classList.add("pulse");
       setTimeout(() => ta.classList.remove("pulse"), 600);
+      showOcrNotification(`Se extrajeron ${matches.length} valores de la imagen.`, "success");
     } else {
-      alert("No se encontraron números reconocibles en la imagen.");
+      showOcrNotification("No se encontraron números reconocibles en la imagen.", "error");
     }
   } catch (err) {
     console.error(err);
-    alert("Error al procesar la imagen con OCR.");
+    showOcrNotification("Error al procesar la imagen con OCR.", "error");
   } finally {
     ocrOverlay.style.display = "none";
     e.target.value = ""; // reset

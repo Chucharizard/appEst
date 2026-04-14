@@ -42,11 +42,11 @@
       </div>
 
       <!-- Botones de Acción -->
-      <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
+      <div class="btn-group" id="ocrNotifArea">
         <button type="button" class="btn-example" onclick="loadExample()">
           ✦ Cargar ejemplo
         </button>
-        <button type="button" class="btn-example" id="ocrCameraBtn" style="background: rgba(43, 204, 150, 0.1); color: var(--accent-main); border: 1px solid var(--accent-main);">
+        <button type="button" class="btn-example" id="ocrCameraBtn" style="background: rgba(34, 211, 238, 0.08); color: var(--cyan); border: 1px solid var(--cyan);">
           📸 Tomar Foto
         </button>
         <button type="button" class="btn-example" id="ocrFileBtn" style="background: rgba(34, 211, 238, 0.08); color: var(--cyan); border: 1px solid var(--cyan);">
@@ -60,7 +60,7 @@
       <div class="options-section" style="margin-bottom: 24px;">
         <p class="options-title">Método de Agrupación</p>
         {% set curr_metodo = request.form.get('metodo', 'sturges') %}
-        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; background: var(--surface2); padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--border2);">
+        <div class="method-group" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; background: var(--surface2); padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--border2);">
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text);">
             <input type="radio" name="metodo" value="sturges" onchange="toggleMetodo()" {% if curr_metodo == 'sturges' %}checked{% endif %} />
             Regla de Sturges
@@ -70,8 +70,8 @@
             Arbitrario
           </label>
           <div id="arbitrarioInput" style="display: {% if curr_metodo == 'arbitrario' %}flex{% else %}none{% endif %}; gap: 8px; align-items: center; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 8px; margin-left: auto;">
-            <label style="font-size: 0.85rem; color: var(--text-mute);">Clases (k):</label>
-            <input type="number" name="k_arbitrario" min="1" max="50" style="width: 70px; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(124,92,252,0.4); background: rgba(124,92,252,0.1); color: var(--text); outline: none;" value="{{ request.form.get('k_arbitrario', '') }}" />
+            <label for="k_arb" style="font-size: 0.85rem; color: var(--text-mute);">Clases (k):</label>
+            <input type="number" id="k_arb" name="k_arbitrario" min="1" max="50" style="width: 70px; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(124,92,252,0.4); background: rgba(124,92,252,0.1); color: var(--text); outline: none;" value="{{ request.form.get('k_arbitrario', '') }}" />
           </div>
         </div>
       </div>
@@ -405,8 +405,5 @@
   </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-{% endblock %}
-{% block scripts %}
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% endblock %}

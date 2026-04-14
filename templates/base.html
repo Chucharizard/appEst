@@ -2,9 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>{% block title %}EstaDística – Calculadora & Gráficos{% endblock %}</title>
   <meta name="description" content="Resuelve ejercicios de estadística descriptiva y visualiza gráficos de datos." />
+  <meta name="theme-color" content="#0d0f1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-status-bar-style" content="black-translucent" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
@@ -24,12 +27,37 @@
       <span class="logo-icon">∑</span>
       <span class="logo-text">EstaDística</span>
     </div>
-    <div class="nav-links">
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6"  x2="19" y2="6" />
+        <line x1="3" y1="11" x2="19" y2="11" />
+        <line x1="3" y1="16" x2="19" y2="16" />
+      </svg>
+    </button>
+    <div class="nav-links" id="navLinks">
       <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">📊 Tablas Estadísticas</a>
       <a href="/graficos" class="nav-item {% if request.path == '/graficos' %}active{% endif %}">📈 Gráficos Visión</a>
     </div>
   </div>
 </nav>
+<script>
+  (function() {
+    const toggle = document.getElementById('navToggle');
+    const links  = document.getElementById('navLinks');
+    if (toggle && links) {
+      toggle.addEventListener('click', function() {
+        const open = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open);
+      });
+      document.addEventListener('click', function(e) {
+        if (!toggle.contains(e.target) && !links.contains(e.target)) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+  })();
+</script>
 
 {% block content %}
 {% endblock %}
